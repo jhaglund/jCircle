@@ -3,34 +3,69 @@
 <head>
   <meta charset="utf-8">
   <title>jCircle - Circular interaction filter for javascript</title>
+<style>
+#circular1{
+  margin:0px auto 0px auto; 
+  height:400px;
+  width:400px;
+  background-color:red;
+}
+#circular2{
+  margin:0px auto 0px auto; 
+  height:400px;
+  width:400px;
+  background-color:blue;
+}
+</style>
 </head>
 <body>
 
 
-<div id="circular1"></div>
+<div id="circular1">asdf</div>
+<div id="circular2">zxcv</div>
 
 <script src="/js/libs/jquery.min.js"></script>
 <script src="/js/mylibs/romanblack.js"></script>
 <script>
+
+//jCircle.js
 (function($){
+
+  //define the plugin action
   $.fn.jCircle = function( callback ) {
-    var previousDegree = 0; //start at the top
-    circleCheck = function(){}
-    if(isACircle){
-      callback();
-    }
+    $.each(this, function(i, elem){
+      var previousDegree = 0 //start at the top
+        , $elem = $(elem)
+          //determine the center of the element, cache
+        , circleCenterX = parseInt( $elem.height() / 2 )
+        , circleCenterY = parseInt( $elem.width() / 2 )
+        , centerOffsetX = function(x){ return x - elem.offsetLeft - circleCenterX; }
+        , centerOffsetY = function(y){ return y - elem.offsetTop - circleCenterY; };
+      
+      //bind the mousemove action to the element
+      $elem.bind('mousemove',function(e){
+        //e.pageX e.pageY are from the edge of the document, we need relative to this element's center
+        //get the degree of the current position
+        var currentDegree = romanblack( centerOffsetX(e.pageX), centerOffsetY(e.pageY) )
+          , direction = (previousDegree > currentDegree) //clockwise == true
+          , velocity = 1;
+        callback($elem, direction, currentDegree, velocity);
+        previousDegree = currentDegree;
+      });
+    });
     return this;
   };
 }(jQuery));
 
 //include jCircle-01.js
-var callback = function(direction, degree, velocity)
+var callback = function($elem, direction, degree, velocity)
 {
-  console.log(direction, degree, velocity);
+  $elem.text("direction: "+direction +" degree:"+ degree+" velocity"+ velocity);
   return;
 };
 //when a circular UI event starts in the #circular1 div, callback will be triggered
-$.jCircle('#circular1', callback);
+$('#circular1').jCircle(callback);
+$('#circular2').jCircle(callback);
 
 </script>
 </body>
