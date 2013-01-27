@@ -21,7 +21,7 @@
 <body>
 
 
-<div id="circular1">asdf</div>
+<div id="circular1"><canvas id="canvas1" height="400" width="400"></canvas></div>
 <div id="circular2">zxcv</div>
 
 <script src="/js/libs/jquery.min.js"></script>
@@ -34,38 +34,63 @@
   //define the plugin action
   $.fn.jCircle = function( callback ) {
     $.each(this, function(i, elem){
-      var previousDegree = 0 //start at the top
+      var previousRadian = 0 //start at the top
         , $elem = $(elem)
           //determine the center of the element, cache
         , circleCenterX = parseInt( $elem.height() / 2 )
         , circleCenterY = parseInt( $elem.width() / 2 )
         , centerOffsetX = function(x){ return x - elem.offsetLeft - circleCenterX; }
-        , centerOffsetY = function(y){ return y - elem.offsetTop - circleCenterY; };
+        , centerOffsetY = function(y){ return (y - elem.offsetTop - circleCenterY) *-1; };
       
       //bind the mousemove action to the element
       $elem.bind('mousemove',function(e){
         //e.pageX e.pageY are from the edge of the document, we need relative to this element's center
-        //get the degree of the current position
-        var currentDegree = romanblack( centerOffsetX(e.pageX), centerOffsetY(e.pageY) )
-          , direction = (previousDegree > currentDegree) //clockwise == true
+        //get the radian of the current position
+        var currentRadian = romanblack( centerOffsetX(e.pageX), centerOffsetY(e.pageY) )
+          , direction = (previousRadian < currentRadian) //clockwise == true
           , velocity = 1;
-        callback($elem, direction, currentDegree, velocity);
-        previousDegree = currentDegree;
+        callback($elem, direction, currentRadian, velocity);
+        previousRadian = currentRadian;
       });
     });
     return this;
   };
 }(jQuery));
 
-//include jCircle-01.js
-var callback = function($elem, direction, degree, velocity)
+var canvas = document.getElementById('canvas1')
+  , context = canvas.getContext('2d');
+var rectWidth = 150;
+var rectHeight = 75;
+var translatedX = canvas.width/2
+  , translatedY = canvas.height/2;
+
+// translate context to center of canvas
+var drawbox = function(rotationRads){
+  canvas.width = canvas.width;
+  context.translate( translatedX, translatedY);
+  context.rotate(rotationRads);
+  context.fillStyle = 'blue';
+  context.fillRect(rectWidth/-2, rectHeight/-2, rectWidth, rectHeight);
+};
+
+//callback that gets fired
+var callback1 = function($elem, direction, radian, velocity)
 {
-  $elem.text("direction: "+direction +" degree:"+ degree+" velocity"+ velocity);
+  drawbox(radian);
+  return;
+};
+//setup the first box and jCircle event
+drawbox(0);
+$('#circular1').jCircle(callback1);
+
+var callback2 = function($elem, direction, radian, velocity)
+{
+  $elem.text("direction: "+direction +" radian:"+ radian+" velocity"+ velocity);
   return;
 };
 //when a circular UI event starts in the #circular1 div, callback will be triggered
-$('#circular1').jCircle(callback);
-$('#circular2').jCircle(callback);
+$('#circular1').jCircle(callback1);
+$('#circular2').jCircle(callback2);
 
 </script>
 </body>

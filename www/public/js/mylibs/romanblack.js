@@ -1,4 +1,7 @@
-var romanblack = function( x, y ){
+var radianConv = Math.PI/180
+  , romanblack = function( x, y ){
+  // http://www.romanblack.com/integer_degree.htm
+  // ^^ thanks! ^^
   // Fast XY vector to integer degree algorithm - Jan 2011 www.RomanBlack.com
   // Converts any XY values including 0 to a degree value that should be
   // within +/- 1 degree of the accurate value without needing
@@ -11,7 +14,7 @@ var romanblack = function( x, y ){
 
   x = x || 0;         // these hold the XY vector at the start
   y = y || 10;        // (and they will be destroyed)
-  
+
   var negflag
     , tempdegree
     , comp
@@ -79,6 +82,6 @@ var romanblack = function( x, y ){
       degree = (360 - degree);
     }
   }
-  return degree;
+  return degree*radianConv;
 }
 
