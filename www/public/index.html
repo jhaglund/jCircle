@@ -2,173 +2,69 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>jCircle - Circular interaction filter for javascript</title>
+  <title>jCircle - Circular interactions plugin for jQuery</title>
 <style>
-#circular1{ margin:0px auto 0px auto; height:400px;width:400px;background-color:red;}
-#circular2{ margin:0px auto 0px auto; height:400px;width:400px;background-color:grey;}
-#circularDebug{margin:0px auto 0px auto; height:400px;width:400px;background-color:blue; color:white;}
+#content{width:400px; margin:0px auto 0px auto;}
+#circular1{ height:400px;width:400px;background-color:red;}
+#circular2{ height:400px;width:400px;background-color:grey;}
+#circularDebug{ height:400px;width:400px;background-color:blue; color:white;}
 </style>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+<script src="/js/mylibs/jCircle.js"></script>
+<script>
+var view = function(num){
+  $('.examples').hide();
+  $('#example' + parseInt(num)).show();
+}
+</script>
 </head>
 <body>
 
-<div id="circular1"><canvas id="canvas1" height="400" width="400"></canvas></div>
-<div id="circular2"><canvas id="canvas2" height="400" width="400"></canvas></div>
-<div id="circularDebug">zxcv</div>
+<div id="content">
+<h2>jCircle.js</h2>
+<p> A <a href="http://jquery.com/">jQuery</a> <a href="http://plugins.jquery.com/">plugin</a> to enable circular UI interactions, like click &amp; drag to rotate. View Source for more examples. <a href="/js/mylibs/jCircle.js">Get the plugin</a>.</p>
 
-<script>
-//jCircle.js
-(function($){
-
-  var radianConv = Math.PI/180
-    , radianMax = Math.PI*2
-    , romanblack = function( x, y ){
-    // http://www.romanblack.com/integer_degree.htm
-    // ^^ thanks! ^^
-    // Fast XY vector to integer degree algorithm - Jan 2011 www.RomanBlack.com
-    // Converts any XY values including 0 to a degree value that should be
-    // within +/- 1 degree of the accurate value without needing
-    // large slow trig functions like ArcTan() or ArcCos().
-    // NOTE! at least one of the X or Y values must be non-zero!
-    // This is the full version, for all 4 quadrants and will generate
-    // the angle in integer degrees from 0-360.
-    // Any values of X and Y are usable including negative values provided
-    // they are between -1456 and 1456 so the 16bit multiply does not overflow.
-
-    x = x || 0;         // these hold the XY vector at the start
-    y = y || 10;        // (and they will be destroyed)
-
-    var negflag
-      , tempdegree
-      , comp
-      , degree     // this will hold the result
-      , ux
-      , uy;
-
-    // Save the sign flags then remove signs and get XY as unsigned ints
-    negflag = 0;
-    if(x < 0) {
-      negflag += 0x01;    // x flag bit
-      x = (0 - x);        // is now +
-    }
-    ux = x;                // copy to unsigned var before multiply
-    if(y < 0) {
-      negflag += 0x02;    // y flag bit
-      y = (0 - y);        // is now +
-    }
-    uy = y;                // copy to unsigned var before multiply
-
-    // 1. Calc the scaled "degrees"
-    if(ux > uy) {
-      degree = (uy * 45) / ux;   // degree result will be 0-45 range
-      negflag += 0x10;    // octant flag bit
-    } 
-    else {
-      degree = (ux * 45) / uy;   // degree result will be 0-45 range
-    }
-
-    // 2. Compensate for the 4 degree error curve
-    comp = 0;
-    tempdegree = degree;    // use an unsigned char for speed!
-    if(tempdegree > 22) {   // if top half of range
-      if(tempdegree <= 44) comp++;
-      if(tempdegree <= 41) comp++;
-      if(tempdegree <= 37) comp++;
-      if(tempdegree <= 32) comp++;  // max is 4 degrees compensated
-    }
-    else {    // else is lower half of range
-      if(tempdegree >= 2) comp++;
-      if(tempdegree >= 6) comp++;
-      if(tempdegree >= 10) comp++;
-      if(tempdegree >= 15) comp++;  // max is 4 degrees compensated
-    }
-    degree += comp;   // degree is now accurate to +/- 1 degree!
-
-    // Invert degree if it was X>Y octant, makes 0-45 into 90-45
-    if(negflag & 0x10) {
-      degree = (90 - degree);
-    }
-
-    // 3. Degree is now 0-90 range for this quadrant,
-    // need to invert it for whichever quadrant it was in
-    if(negflag & 0x02) {   // if -Y
-      if(negflag & 0x01){   // if -Y -X
-        degree = (180 + degree);
-      }
-      else{        // else is -Y +X
-        degree = (180 - degree);
-      }
-    }
-    else    // else is +Y
-    {
-      if(negflag & 0x01){   // if +Y -X
-        degree = (360 - degree);
-      }
-    }
-    return degree*radianConv;
+<pre>
+$('#id').jCircle(
+  function(radian, smoothedRadian, velocity, direction)
+  {
+    //do things with the values, like rotate an image
   }
+);
+</pre>
+  <p>
+    <a href="javascript: view(1);">Example 1 (Follow)</a>
+    <a href="javascript: view(2);">Example 2 (Knob)</a>
+    <a href="javascript: view(3);">Example 3 (Debug)</a>
+  </p>
+  <div id="example1" class="examples" style="display:none">
+    <div id="circular1"><canvas id="canvas1" height="400" width="400"></canvas></div>
+  </div>
+  <div id="example2" class="examples">
+    <div id="circular2"><canvas id="canvas2" height="400" width="400"></canvas></div>
+    <label for="circular2output">Knob Value:</label>
+    <input type="text" id="circular2output" name="circular2output" value="0">
+    <br>
+    <label for="circular2output">Cursor Value:</label>
+    <input type="text" id="circular2cursor" name="circular2cursor" value="0">
+  </div>
+  <div id="example3" class="examples" style="display:none">
+    <div id="circularDebug">zxcv</div>
+  </div>
+  <h2><a href="/">Home</a></h2>
+</div>
+<script>
 
 
+//jKnob plugin for easy knobs
+/*
+(function($){
+  imageURL, canvasId, callback
+}(jQuery));//end jKnob
+*/
 
-  //define the plugin action
-  $.fn.jCircle = function( callback ) {
-    //for each matched element, set the circular event handler to the provided callback
-    $.each(this, function(i, elem){
-      var smoothedRadian = 0
-        , $elem = $(elem)
-          //determine the center of the element, cache
-        , circleCenterX = parseInt( $elem.height() / 2 )
-        , circleCenterY = parseInt( $elem.width() / 2 )
-        , centerOffsetX = function(x){ return x - elem.offsetLeft - circleCenterX; }
-        , centerOffsetY = function(y){ return (y - elem.offsetTop - circleCenterY) *-1; };
-      
-      //bind the mousemove action to the element
-      var bindMoveEvent = function(){
-        var previousRadian = 0
-          , previousTime = Number.NEGATIVE_INFINITY;
-        $elem.bind('mousemove',function(e){
-          // e.pageX e.pageY are from the edge of the document
-          // we need relative to this element's center
-          // get the radian of the current position
-          var cursorRadian = romanblack( centerOffsetX(e.pageX), centerOffsetY(e.pageY) )
-            , currentTime = window.performance.now()
-            , direction = (previousRadian < cursorRadian) //clockwise == true
-            , distance = (cursorRadian - previousRadian)// % radianMax
-            , velocity = (Math.abs(cursorRadian - previousRadian) / (currentTime - previousTime))
-            
-          // run the callback function only if we're really moving
-          if(velocity > 0){
-            smoothedRadian += distance;
-            if(smoothedRadian < 0 || smoothedRadian > radianMax){
-              smoothedRadian = radianMax - Math.abs(smoothedRadian);
-            }
-            callback($elem, direction, cursorRadian, smoothedRadian, velocity);
-          }
-          // save cursorRadian for next time
-          previousRadian = cursorRadian;
-          previousTime = currentTime;
-        });
-      }
-      , unbindMoveEvent = function(){ $elem.unbind('mousemove'); };
-      
-      // only do this stuff when "mousedown"
-      // alternate, just bindMoveEvent();
-      $elem.bind('mousedown', bindMoveEvent);
-      $elem.bind('mouseup', unbindMoveEvent);
-//      $elem.bind('mouseenter', bindMoveEvent);
-      $elem.bind('mouseleave', unbindMoveEvent);
-    });
-    return this;
-  };
-}(jQuery));
-
-
-
-
-
-
+//example 1 uses canvas
 (function(){
-  //example 1 uses canvas
   var canvas1 = document.getElementById('canvas1')
     , context1 = canvas1.getContext('2d')
     , rectWidth = 150
@@ -189,9 +85,9 @@
   drawBox(0);
 
   //setup example 1's jCircle event and callback
+  //this uses radian (mouse position) so it jumps when you re-click elsewhere
   $('#circular1').jCircle(
-    function($elem, direction, radian, smoothedRadian, velocity)
-    {
+    function(radian, smoothedRadian, velocity, direction) {
       drawBox(radian);
     }
   );
@@ -201,8 +97,8 @@
 
 
 
+//example 2 also uses canvas
 (function(){
-  //example 2 also uses canvas
   var canvas2 = document.getElementById('canvas2')
     , context2 = canvas2.getContext('2d')
     , imgWidth = 150
@@ -228,12 +124,25 @@
     //setup the first box, and provide the imgData for drawing in the drawImg closure
     drawImage(this);
   };
-  imageObj.src = 'http://jcircle.local/knob.png';
+  imageObj.src = '/knob.png';
 
 
-  //setup example 1's jCircle event and callback
-  $('#circular2').jCircle(
-    function($elem, direction, radian, smoothedRadian, velocity){
+  //setup example 2's jCircle event and callback
+  //this example uses the smoothedRadian, which is ignorant of the current mouse position (radian)
+  //so you can smoothly tweak the knob's position
+  var $circularOut = $('#circular2output');
+  var $circularCursor = $('#circular2cursor');
+  $('#canvas2').jCircle(
+    function(radian, smoothedRadian, velocity, direction) {
+    
+      //output the value from 0 - 100
+      var maxValues = 101;
+      $circularOut[0].value = Math.floor((smoothedRadian / (Math.PI*2))*maxValues);
+      
+      //output the radian of the cursor
+      $circularCursor[0].value = radian;
+      
+      //note that this is drawImg: NOT drawImage, which created drawImg
       drawImg(smoothedRadian);
     }
   );
@@ -243,11 +152,11 @@
 
 
 
+//the third example, just outputs the values
 (function(){
-  //the third example, just outputs the values
   $('#circularDebug').jCircle(
-    function($elem, direction, radian, smoothedRadian, velocity) {
-      $elem.text("direction: "+direction +" radian:"+ radian+"  smradian:"+ smoothedRadian+" velocity"+ velocity);
+    function(radian, smoothedRadian, velocity, direction) {
+      $('#circularDebug').text("direction: "+direction +" radian:"+ radian+"  smradian:"+ smoothedRadian+" velocity"+ velocity);
     }
   );
 }());//end example 3

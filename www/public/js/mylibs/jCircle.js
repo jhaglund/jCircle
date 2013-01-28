@@ -1,10 +1,37 @@
-//jCircle.js
+/*
+jCircle.js
+Copyright Joshua H. Haglund, except for Roman Black's contributions
+http://josh.isgrowing.net/jCircle.html
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
 (function($){
 
   var radianConv = Math.PI/180
+    , radianMax = Math.PI*2
     , romanblack = function( x, y ){
+    // Thanks Roman!
+    //begin Roman Black contribution
     // http://www.romanblack.com/integer_degree.htm
-    // ^^ thanks! ^^
+    // must include link to this website
     // Fast XY vector to integer degree algorithm - Jan 2011 www.RomanBlack.com
     // Converts any XY values including 0 to a degree value that should be
     // within +/- 1 degree of the accurate value without needing
@@ -86,6 +113,7 @@
       }
     }
     return degree*radianConv;
+    //end Roman Black contribution
   }
 
 
@@ -94,43 +122,78 @@
   $.fn.jCircle = function( callback ) {
     //for each matched element, set the circular event handler to the provided callback
     $.each(this, function(i, elem){
-      var previousRadian = 0 //start at the top
-        , previousTime = Number.POSITIVE_INFINITY
+      var smoothedRadian = 0
         , $elem = $(elem)
-          //determine the center of the element, cache
+        //determine the center of the element, cache
         , circleCenterX = parseInt( $elem.height() / 2 )
         , circleCenterY = parseInt( $elem.width() / 2 )
+        //helper functions convert cursor position to relative center of element
         , centerOffsetX = function(x){ return x - elem.offsetLeft - circleCenterX; }
-        , centerOffsetY = function(y){ return (y - elem.offsetTop - circleCenterY) *-1; };
+        , centerOffsetY = function(y){ return -1 * (y - elem.offsetTop - circleCenterY); };
       
-      //bind the mousemove action to the element
-      var bindMoveEvent = function(){
-        $elem.bind('mousemove',function(e){
-          // e.pageX e.pageY are from the edge of the document
-          // we need relative to this element's center
-          // get the radian of the current position
-          var currentRadian = romanblack( centerOffsetX(e.pageX), centerOffsetY(e.pageY) )
-            , currentTime = window.performance.now()
-            , direction = (previousRadian < currentRadian) //clockwise == true
-            , velocity = (Math.abs(currentRadian-previousRadian) / (currentTime-previousTime))*1000;
+      //helpers to bind/unbind the mousemove action to the element
+      var unbindMoveEvent = function( eventType )
+        {
+          console.log('UNbindMove event', eventType);
+          $elem.unbind( eventType ); 
+        }
+        , bindMoveEvent = function( eventType )
+        {
+          console.log('bindmove event', eventType);
+          var previousRadian = 0
+            , previousTime = Number.NEGATIVE_INFINITY
+            , moveEventCallback = function(e)
+            {
+              e.preventDefault();
+              console.log('moving', e);
+              console.log('pagex', e.pageX);
+              // e.pageX e.pageY are from the edge of the document
+              // we need relative to this element's center
+              // get the radian of the current position
+              var cursorRadian = romanblack( centerOffsetX(e.pageX), centerOffsetY(e.pageY) )
+                , currentTime = window.performance.now()
+                , direction = previousRadian < cursorRadian //clockwise == true
+                , distance = cursorRadian - previousRadian
+                , velocity = Math.abs(cursorRadian - previousRadian) / (currentTime - previousTime);
+                
+              // run the callback function only if we're really moving
+              if(velocity > 0){
+              
+                smoothedRadian += distance;
+                //range check and correction
+                if(smoothedRadian < 0 || smoothedRadian >= radianMax){
+                  smoothedRadian = (direction) ? 0 : radianMax;
+                }
+                
+                //run the provided callback
+                callback(cursorRadian, smoothedRadian, velocity, direction);
+              }
+              
+              // save cursorRadian for next time
+              previousRadian = cursorRadian;
+              previousTime = currentTime;
+            };
             
-          // run the callback function
-          callback($elem, direction, currentRadian, velocity);
-          
-          // save currentRadian for next time
-          previousRadian = currentRadian;
-          previousTime = currentTime;
-        });
-      }
-      , unbindMoveEvent = function(){ $elem.unbind('mousemove'); };
+          //do the actual event binding
+          $elem.bind( eventType, moveEventCallback );
+        };
       
-      // only do this stuff when "mousedown"
-      // alternate, just bindMoveEvent();
-      $elem.unbind('mousedown').bind('mousedown', bindMoveEvent);
-      $elem.unbind('mouseup').bind('mouseup', unbindMoveEvent);
+      // only do this stuff when mousedown, mouseenter, etc.
+      // or, just bindMoveEvent(); to skip the mousedown event
+      $elem.unbind('mousedown').bind('mousedown', function(){ bindMoveEvent('mousemove'); });
+      $elem.unbind('mouseup').bind('mouseup', function(){ unbindMoveEvent('mousemove'); });
+      //$elem.bind('mouseenter', bindMoveEvent);
+      $elem.bind('mouseleave', unbindMoveEvent);
+
+      $elem.bind('touchstart', function(){ bindMoveEvent('touchmove'); });
+      $elem.bind('touchend', function(){ unbindMoveEvent('touchmove'); });
+      $elem.bind('touchcancel', function(){ unbindMoveEvent('touchmove'); });
+      $elem.bind('touchleave', function(){ unbindMoveEvent('touchmove'); });
+//      $elem.bind('touchmove', bindMoveEvent);
+
+
     });
     return this;
   };
 }(jQuery));
-
 
