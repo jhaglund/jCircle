@@ -27,6 +27,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   var radianConv = Math.PI/180
     , radianMax = Math.PI*2
+    , radianALMOSTMax = radianMax-0.0000000000000001
     , romanblack = function( x, y ){
     // Thanks Roman!
     //begin Roman Black contribution
@@ -119,7 +120,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
   //define the plugin action
-  $.fn.jCircle = function( callback ) {
+  $.fn.jCircle = function( options, callback) {
+    if("function" == typeof options){
+      callback =  options;
+    }
+
     //for each matched element, set the circular event handler to the provided callback
     $.each(this, function(i, elem){
       var smoothedRadian = 0
@@ -134,61 +139,75 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       //helpers to bind/unbind the mousemove action to the element
       var unbindMoveEvent = function( eventType )
         {
-          console.log('UNbindMove event', eventType);
           $elem.unbind( eventType ); 
         }
         , bindMoveEvent = function( eventType )
         {
-          console.log('bindmove event', eventType);
           var previousRadian = 0
             , previousTime = Number.NEGATIVE_INFINITY
             , moveEventCallback = function(e)
             {
               e.preventDefault();
-              console.log('moving', e);
-              console.log('pagex', e.pageX);
-              // e.pageX e.pageY are from the edge of the document
-              // we need relative to this element's center
-              // get the radian of the current position
-              var cursorRadian = romanblack( centerOffsetX(e.pageX), centerOffsetY(e.pageY) )
-                , currentTime = window.performance.now()
-                , direction = previousRadian < cursorRadian //clockwise == true
-                , distance = cursorRadian - previousRadian
-                , velocity = Math.abs(cursorRadian - previousRadian) / (currentTime - previousTime);
-                
-              // run the callback function only if we're really moving
-              if(velocity > 0){
-              
-                smoothedRadian += distance;
-                //range check and correction
-                if(smoothedRadian < 0 || smoothedRadian >= radianMax){
-                  smoothedRadian = (direction) ? 0 : radianMax;
-                }
-                
-                //run the provided callback
-                callback(cursorRadian, smoothedRadian, velocity, direction);
+              //shim it if we can't get a microtime.
+              //this breaks velocity
+              var timer = ('function' == typeof window.performance.now)
+                            ? window.performance
+                            : {now:function(){return previousTime; }};
+              var cartesianToCallback = function(x, y)
+                {
+                  // called repeatedly as movement happens
+                  // converts x,y to radian, smoothedRadian, velocity and direction
+                  // x,y are from the edge of the document
+                  // we need relative to this element's center
+                  var cursorRadian = romanblack( centerOffsetX(x), centerOffsetY(y) )
+                    , currentTime = timer.now()
+                    , distance = cursorRadian - previousRadian
+                    , direction = distance //clockwise == true
+                    , velocity = Math.abs(cursorRadian-previousRadian) / (currentTime-previousTime);
+                  // run the callback function only if we're really moving
+                  if(velocity > 0){
+                    smoothedRadian += distance;
+                    //range check and correction
+                    if(smoothedRadian < 0){
+                      smoothedRadian = smoothedRadian + radianMax;
+                    }else if(smoothedRadian >= radianMax){
+                      smoothedRadian = smoothedRadian - radianMax;
+                    }
+                    //run the provided callback
+                    callback(cursorRadian, smoothedRadian, velocity, direction);
+                  }
+                  // save cursorRadian for next time
+                  previousRadian = cursorRadian;
+                  previousTime = currentTime;
+                };
+
+              if('touchmove.jCircle' == eventType){
+                //skipping the other touches for now
+                var o = e.originalEvent.changedTouches[0];
+//                $.each(e.originalEvent.changedTouches, function(i,o){
+//                  console.log('ct',i,'pagex', o.pageX, o);
+                  cartesianToCallback(o.pageX, o.pageY);
+//                });
+              }else{
+                //for mouse events
+                cartesianToCallback(e.pageX, e.pageY);
               }
-              
-              // save cursorRadian for next time
-              previousRadian = cursorRadian;
-              previousTime = currentTime;
             };
             
           //do the actual event binding
-          $elem.bind( eventType, moveEventCallback );
+          $elem.unbind( eventType ).bind( eventType, moveEventCallback );
         };
       
       // only do this stuff when mousedown, mouseenter, etc.
       // or, just bindMoveEvent(); to skip the mousedown event
-      $elem.unbind('mousedown').bind('mousedown', function(){ bindMoveEvent('mousemove'); });
-      $elem.unbind('mouseup').bind('mouseup', function(){ unbindMoveEvent('mousemove'); });
-      //$elem.bind('mouseenter', bindMoveEvent);
-      $elem.bind('mouseleave', unbindMoveEvent);
+      $elem.bind('mousedown.jCircle', function(){ bindMoveEvent('mousemove.jCircle'); });
+      $elem.bind('mouseup.jCircle', function(){ unbindMoveEvent('mousemove.jCircle'); });
+      $elem.bind('mouseleave.jCircle', function(){ unbindMoveEvent('mousemove.jCircle'); });
 
-      $elem.bind('touchstart', function(){ bindMoveEvent('touchmove'); });
-      $elem.bind('touchend', function(){ unbindMoveEvent('touchmove'); });
-      $elem.bind('touchcancel', function(){ unbindMoveEvent('touchmove'); });
-      $elem.bind('touchleave', function(){ unbindMoveEvent('touchmove'); });
+      $elem.bind('touchstart.jCircle', function(){ bindMoveEvent('touchmove.jCircle'); });
+      $elem.bind('touchend.jCircle', function(){ unbindMoveEvent('touchmove.jCircle'); });
+      $elem.bind('touchcancel.jCircle', function(){ unbindMoveEvent('touchmove.jCircle'); });
+      $elem.bind('touchleave.jCircle', function(){ unbindMoveEvent('touchmove.jCircle'); });
 //      $elem.bind('touchmove', bindMoveEvent);
 
 
