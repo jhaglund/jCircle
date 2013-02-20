@@ -23,6 +23,7 @@ var view = function(num){
 <div id="content">
 <h2>jCircle.js</h2>
 <p> A <a href="http://jquery.com/">jQuery</a> <a href="http://plugins.jquery.com/">plugin</a> to enable circular UI interactions, like click &amp; drag to rotate. View Source for more examples. <a href="/js/mylibs/jCircle.js">Get the plugin</a>.</p>
+<p>Beta code: only works in newest browsers with good HTML5 support.</p>
 
 <pre>
 $('#id').jCircle(
@@ -42,15 +43,19 @@ $('#id').jCircle(
   </div>
   <div id="example2" class="examples">
     <div id="circular2"><canvas id="canvas2" height="400" width="400"></canvas></div>
-    <label for="circular2output">Knob Value:</label>
+    <label for="circular2output">Knob Percent:</label>
     <input type="text" id="circular2output" name="circular2output" value="0">
     <br>
-    <label for="circular2output">Cursor Value:</label>
+    <label for="circular2output">Knob Radian:</label>
     <input type="text" id="circular2cursor" name="circular2cursor" value="0">
+    <br>
+    <label for="circularSmoothed">Smoothed Radian:</label>
+    <input type="text" id="circularSmoothed" name="circularSmoothed" value="0">
   </div>
   <div id="example3" class="examples" style="display:none">
     <div id="circularDebug">zxcv</div>
   </div>
+<p>1/29/13: Smoothest in Chrome. Good in Firefox, including mobile. Android default browser crashes, doesn't work in iOS Safari.</p>
   <h2><a href="/">Home</a></h2>
 </div>
 <script>
@@ -132,6 +137,7 @@ $('#id').jCircle(
   //so you can smoothly tweak the knob's position
   var $circularOut = $('#circular2output');
   var $circularCursor = $('#circular2cursor');
+  var $circularSmoothed = $('#circularSmoothed');
   $('#canvas2').jCircle(
     function(radian, smoothedRadian, velocity, direction) {
     
@@ -141,6 +147,9 @@ $('#id').jCircle(
       
       //output the radian of the cursor
       $circularCursor[0].value = radian;
+
+      //output the radian of the cursor
+      $circularSmoothed[0].value = smoothedRadian;
       
       //note that this is drawImg: NOT drawImage, which created drawImg
       drawImg(smoothedRadian);
@@ -156,7 +165,7 @@ $('#id').jCircle(
 (function(){
   $('#circularDebug').jCircle(
     function(radian, smoothedRadian, velocity, direction) {
-      $('#circularDebug').text("direction: "+direction +" radian:"+ radian+"  smradian:"+ smoothedRadian+" velocity"+ velocity);
+      $('#circularDebug').text("direction: "+direction +" radian: "+ radian+"  smradian: "+ smoothedRadian+" velocity: "+ velocity);
     }
   );
 }());//end example 3
