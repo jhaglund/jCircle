@@ -120,10 +120,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
   //define the plugin action
-  $.fn.jCircle = function( options, callback) {
-    if("function" == typeof options){
-      callback =  options;
-    }
+  $.fn.jCircle = function( callback) {
 
     //for each matched element, set the circular event handler to the provided callback
     $.each(this, function(i, elem){
