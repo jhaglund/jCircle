@@ -140,35 +140,35 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         }
         , bindMoveEvent = function( eventType )
         {
+          //initialize state
           var previousRadian = 0
-            , previousTime = Number.NEGATIVE_INFINITY
-            , moveEventCallback = function(e)
-            {
-              e.preventDefault();
-              //shim it if we can't get a microtime.
-              //this breaks velocity
-              var timer = ('function' == typeof window.performance.now)
-                            ? window.performance
-                            : {now:function(){return previousTime; }};
-              var cartesianToCallback = function(x, y)
+            , previousTime = Math.NEGATIVE_INFINITY
+            , cartesianToCallback = function(x, y)
                 {
                   // called repeatedly as movement happens
                   // converts x,y to radian, smoothedRadian, velocity and direction
-                  // x,y are from the edge of the document
-                  // we need relative to this element's center
-                  var cursorRadian = romanblack( centerOffsetX(x), centerOffsetY(y) )
+                  
+                  //shim it if we can't get a microtime.
+                  //this breaks velocity
+                  var timer = ('function' == typeof window.performance.now)
+                        ? window.performance
+                        : {now:function(){ return new Date().getTime() / 1000; }}
+                    // x,y are from the edge of the document
+                    // we need relative to this element's center
+                    , cursorRadian = romanblack( centerOffsetX(x), centerOffsetY(y) )
                     , currentTime = timer.now()
                     , distance = cursorRadian - previousRadian
-                    , direction = distance //clockwise == true
+                    //direction is true for clockwise, false for counter clockwise
+                    , direction = distance > 0
                     , velocity = Math.abs(cursorRadian-previousRadian) / (currentTime-previousTime);
                   // run the callback function only if we're really moving
                   if(velocity > 0){
                     smoothedRadian += distance;
                     //range check and correction
                     if(smoothedRadian < 0){
-                      smoothedRadian = smoothedRadian + radianMax;
+                      smoothedRadian += radianMax;
                     }else if(smoothedRadian >= radianMax){
-                      smoothedRadian = smoothedRadian - radianMax;
+                      smoothedRadian -= radianMax;
                     }
                     //run the provided callback
                     callback(cursorRadian, smoothedRadian, velocity, direction);
@@ -176,10 +176,24 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                   // save cursorRadian for next time
                   previousRadian = cursorRadian;
                   previousTime = currentTime;
-                };
+                }
+            , moveEventCallback = function(e)
+            {
+              e.preventDefault();
 
               if('touchmove.jCircle' == eventType){
                 //skipping the other touches for now
+/*
+                var avgX = 0
+                  , avgY = 0;
+                $.each(e.originalEvent.changedTouches, function(i,o){
+                  avgX += o.pageX;
+                  avgY += o.pageY;
+                });
+                avgX = parseInt(avgX / e.originalEvent.changedTouches.length);
+                avgY = parseInt(avgX / e.originalEvent.changedTouches.length);
+                cartesianToCallback(avgX, avgY);
+*/
                 var o = e.originalEvent.changedTouches[0];
 //                $.each(e.originalEvent.changedTouches, function(i,o){
 //                  console.log('ct',i,'pagex', o.pageX, o);

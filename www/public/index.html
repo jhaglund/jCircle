@@ -27,7 +27,7 @@ var view = function(num){
 
 <pre>
 $('#id').jCircle(
-  function(radian, smoothedRadian, velocity, direction)
+  function(cursorRadian, smoothedRadian, velocity, direction)
   {
     //do things with the values, like rotate an image
   }
@@ -46,11 +46,11 @@ $('#id').jCircle(
     <label for="circular2output">Knob Percent:</label>
     <input type="text" id="circular2output" name="circular2output" value="0">
     <br>
-    <label for="circular2output">Knob Radian:</label>
-    <input type="text" id="circular2cursor" name="circular2cursor" value="0">
-    <br>
-    <label for="circularSmoothed">Smoothed Radian:</label>
+    <label for="circularSmoothed">Knob Radian:</label>
     <input type="text" id="circularSmoothed" name="circularSmoothed" value="0">
+    <br>
+    <label for="circular2output">Cursor Radian:</label>
+    <input type="text" id="circular2cursor" name="circular2cursor" value="0">
   </div>
   <div id="example3" class="examples" style="display:none">
     <div id="circularDebug">zxcv</div>
@@ -60,30 +60,23 @@ $('#id').jCircle(
 </div>
 <script>
 
-
-//jKnob plugin for easy knobs
-/*
-(function($){
-  imageURL, canvasId, callback
-}(jQuery));//end jKnob
-*/
-
 //example 1 uses canvas
 (function(){
-  var canvas1 = document.getElementById('canvas1')
-    , context1 = canvas1.getContext('2d')
+  var canvas = document.getElementById('canvas1')
+    , context = canvas1.getContext('2d')
     , rectWidth = 150
     , rectHeight = 75
-    , translatedX = canvas1.width/2
-    , translatedY = canvas1.height/2;
+    , translatedX = canvas.width/2
+    , translatedY = canvas.height/2;
     
   // translate context to center of canvas and draw a new rectangle
-  var drawBox = function(rotationRads){
-    canvas1.width = canvas1.width;
-    context1.translate( translatedX, translatedY);
-    context1.rotate(rotationRads);
-    context1.fillStyle = 'blue';
-    context1.fillRect(rectWidth/-2, rectHeight/-2, rectWidth, rectHeight);
+  
+  var drawBox = function(radian, smoothedRadian, velocity, direction) {
+    canvas.width = canvas.width;
+    context.translate( translatedX, translatedY);
+    context.rotate(radian);
+    context.fillStyle = 'blue';
+    context.fillRect(rectWidth/-2, rectHeight/-2, rectWidth, rectHeight);
   };
 
   //setup the first box, independent of the jCircle redraw
@@ -91,11 +84,7 @@ $('#id').jCircle(
 
   //setup example 1's jCircle event and callback
   //this uses radian (mouse position) so it jumps when you re-click elsewhere
-  $('#circular1').jCircle(
-    function(radian, smoothedRadian, velocity, direction) {
-      drawBox(radian);
-    }
-  );
+  $('#circular1').jCircle( drawBox );
 }());//end example 1
 
 
@@ -104,23 +93,23 @@ $('#id').jCircle(
 
 //example 2 also uses canvas
 (function(){
-  var canvas2 = document.getElementById('canvas2')
-    , context2 = canvas2.getContext('2d')
+  var canvas = document.getElementById('canvas2')
+    , context = canvas2.getContext('2d')
     , imgWidth = 150
     , imgHeight = 150
-    , translatedX = canvas2.width/2
-    , translatedY = canvas2.height/2;
+    , translatedX = canvas.width/2
+    , translatedY = canvas.height/2;
   var imageObj = new Image();
   var drawImg;
 
-  // translate context to center of canvas and draw a new rectangle
+  // callback for Image.onload
   var drawImage = function( imageObj ){
-    //closure for updating the image position and stuff
+    //drawImg closure used by jCircle's callback to redraw the knob, rotated
     drawImg = function( rotationRads ){
-      canvas2.width = canvas2.width;
-      context2.translate( translatedX, translatedY);
-      context2.rotate( rotationRads );
-      context2.drawImage( imageObj, imgWidth/-2, imgHeight/-2);
+      canvas.width = canvas.width;
+      context.translate( translatedX, translatedY);
+      context.rotate( rotationRads );
+      context.drawImage( imageObj, imgWidth/-2, imgHeight/-2);
     };
     drawImg(0);
   }
@@ -133,7 +122,7 @@ $('#id').jCircle(
 
 
   //setup example 2's jCircle event and callback
-  //this example uses the smoothedRadian, which is ignorant of the current mouse position (radian)
+  //this example uses the smoothedRadian, which is ignorant of the current event's position (radian)
   //so you can smoothly tweak the knob's position
   var $circularOut = $('#circular2output');
   var $circularCursor = $('#circular2cursor');
